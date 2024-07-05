@@ -37,6 +37,10 @@ object FileSearcher:
           if validLine(line) then
             val columnOffset = line.indexOf(matchText)
             (columnOffset != -1).option(FileMatch(path, MatchPosition(lineOffset + 1, columnOffset + 1, line)))
+            val matcher = pattern.matcher(line)
+            matcher.find().option:
+              val columnOffset = matcher.start()
+              FileMatch(path, MatchPosition(lineOffset + 1, columnOffset + 1, line))
           else
             None
 

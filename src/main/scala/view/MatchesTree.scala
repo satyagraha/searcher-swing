@@ -2,7 +2,7 @@ package org.satyagraha.searcher
 package view
 
 import domain.*
-import helpers.{given, *}
+import helpers.{*, given}
 import io.*
 import model.*
 
@@ -14,18 +14,35 @@ import java.nio.file.Path
 import javax.swing.JTree
 import javax.swing.SwingUtilities.{invokeLater, isRightMouseButton}
 import javax.swing.tree.{DefaultMutableTreeNode, DefaultTreeModel, TreePath}
-import scala.swing.event.{ButtonClicked, Event}
-import scala.swing.{Component, MenuItem, PopupMenu, Publisher}
+import scala.swing.event.Event
+import scala.swing.{Component, MenuItem, PopupMenu}
 
 object MatchesTree:
-  class PathTreeNode(val content: Path | String) extends DefaultMutableTreeNode(content)
 
-  def pathTreePaths(treePath: TreePath): List[Path] =
-    treePath.getPath.toList.map(_.asInstanceOf[PathTreeNode].content).collect:
+  case class NodeContent(content: Path | MatchPosition):
+    override def toString: String =
+      content match
+        case path: Path =>
+          path.toString
+        case matchPosition: MatchPosition =>
+          import matchPosition.*
+
+          s"$lineNumber, $columnNumber : ${lineText.trim.take(100)}"
+
+
+  class PathTreeNode(val nodeContent: NodeContent) extends DefaultMutableTreeNode(nodeContent)
+
+  def pathTreePaths(treePath: TreePath): (Path, Option[MatchPosition]) =
+    val nodeContents = treePath.getPath.toList.map(_.asInstanceOf[PathTreeNode].nodeContent.content)
+    val paths = nodeContents.collect:
       case path: Path => path
+    val matchPosition = nodeContents.lastOption.map:
+      case matchPosition: MatchPosition => matchPosition
+    (paths.combineAll, matchPosition)
 
 class MatchesTree extends PubSub:
-  import MatchesTree._
+  import MatchesTree.*
+  import ContextMenuChoice.*
 
   val treeModel = new DefaultTreeModel(null)
   val tree = new JTree(treeModel)
@@ -34,72 +51,68 @@ class MatchesTree extends PubSub:
   var subDirNode: DefaultMutableTreeNode = _
   var filenameNode: DefaultMutableTreeNode = _
 
-  subscribeTo(this) // to get the context menu events below
+  class ContextMenuItem(title: String,
+                        contextMenuChoice: ContextMenuChoice) extends MenuItem(title):
+      override def publish(e: Event): Unit =
+        MatchesTree.this.handle(ContextMenuEvent(contextMenuChoice))
 
-  trait Republish:
-    self: Publisher =>
-    override def publish(e: Event): Unit =
-      MatchesTree.this.publish(e)
-
-  val copyFilename = new MenuItem("Copy filename") with Republish
-  val copyPath = new MenuItem("Copy path") with Republish
+  val copyFilename = new ContextMenuItem("Copy filename", CopyFilename)
+  val copyPath = new ContextMenuItem("Copy path", CopyPath)
+  val editSelected = new ContextMenuItem("Edit", EditSelected)
   val popupMenu = new PopupMenu:
-    contents ++= Seq(copyFilename, copyPath)
+    contents ++= Seq(copyFilename, copyPath, editSelected)
 
   val stree = Component.wrap(tree)
 
-  val contextMenuPopup = new MouseAdapter:
+  val mouseListener = new MouseAdapter:
     override def mouseClicked(e: MouseEvent): Unit =
       if isRightMouseButton(e) then
         popupMenu.show(stree, e.getX, e.getY)
 
-  tree.addMouseListener(contextMenuPopup)
+  tree.addMouseListener(mouseListener)
 
   reactions += {
+    case ControlStateEvent(controlState) =>
+      if controlState == ControlState.Running then
+        treeModel.setRoot(null)
     case BaseDirEvent(baseDir) =>
       invokeLater: () =>
-        baseDirNode = new PathTreeNode(baseDir)
+        baseDirNode = new PathTreeNode(NodeContent(baseDir))
         treeModel.setRoot(baseDirNode)
     case SubDirEvent(subDir) =>
       invokeLater: () =>
-        subDirNode = new PathTreeNode(subDir)
+        subDirNode = new PathTreeNode(NodeContent(subDir))
         treeModel.insertNodeInto(subDirNode, baseDirNode, baseDirNode.getChildCount)
         tree.expandPath(new TreePath(baseDirNode))
     case FilenameEvent(filename) =>
       invokeLater: () =>
-        filenameNode = new PathTreeNode(filename)
+        filenameNode = new PathTreeNode(NodeContent(filename))
         treeModel.insertNodeInto(filenameNode, subDirNode, subDirNode.getChildCount)
         val nodes = Array[AnyRef](baseDirNode, subDirNode)
         val subDirPath = new TreePath(nodes)
         tree.expandPath(subDirPath)
     case MatchEvent(matchPosition) =>
       invokeLater: () =>
-        val matchPositionNode = new PathTreeNode(render(matchPosition))
+        val matchPositionNode = new PathTreeNode(NodeContent(matchPosition))
         treeModel.insertNodeInto(matchPositionNode, filenameNode, filenameNode.getChildCount)
         val nodes = Array[AnyRef](baseDirNode, subDirNode, filenameNode)
         val filenamePath = new TreePath(nodes)
         tree.expandPath(filenamePath)
-    case EndOfStreamEvent() =>
-      ()
-    case ButtonClicked(button) =>
+//    case EndOfStreamEvent() =>
+//      ()
+    case ContextMenuEvent(contextMenuChoice) =>
       Option(tree.getSelectionPath) match
         case None =>
           publish(InvalidFormEvent(NonEmptyList.one("No tree row selected")))
         case Some(treePath) =>
-          val path = pathTreePaths(treePath).combineAll
-          val copyable =
-            if button eq copyFilename then
-              path.getFileName.some
-            else if button eq copyPath then
-              path.some
-            else
-              None
-          copyable.foreach(path => copyToClipboard(path.toString))
+          val (path, matchPosition) = pathTreePaths(treePath)
+          contextMenuChoice match
+            case CopyFilename =>
+              copyToClipboard(path.getFileName.toString)
+            case CopyPath =>
+              copyToClipboard(path.toString)
+            case EditSelected =>
+              publish(EditEvent(path, matchPosition))
     case event =>
       println(s"MatchesTree: received unhandled event: $event")
   }
-
-  private def render(matchPosition: MatchPosition): String =
-    import matchPosition.*
-
-    s"$lineNumber, $columnNumber : ${lineText.trim.take(100)}"

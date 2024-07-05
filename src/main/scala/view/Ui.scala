@@ -2,6 +2,7 @@ package org.satyagraha.searcher
 package view
 
 import helpers.*
+import io.*
 import model.*
 import ui.MainWindow
 
@@ -12,7 +13,9 @@ import javax.swing.JOptionPane.*
 import javax.swing.SwingUtilities.invokeLater
 import scala.swing.event.Event
 
-class Ui(uiPreferences: UiPreferences) extends PubSub {
+class Ui(uiPreferences: UiPreferences,
+         ioSupport: IoSupport) extends PubSub {
+
   import uiPreferences.*
 
   val frame = new JFrame(title)
@@ -38,11 +41,14 @@ class Ui(uiPreferences: UiPreferences) extends PubSub {
     case UiStateEvent(uiState) =>
       invokeLater: () =>
         mainWindow.uiStateSet(uiState)
-    case ControlStateEvent(controlState) =>
+    case cse@ControlStateEvent(controlState) =>
       invokeLater: () =>
         mainWindow.controlStateSet(controlState == ControlState.Idle)
+        matchesTree.handle(cse)
+    case EditEvent(path, matchPosition) =>
+      ioSupport.launchEditor(path, matchPosition)
     case event =>
-//      println(s"Ui: received unhandled event: $event")
+      //      println(s"Ui: received unhandled event: $event")
       matchesTree.handle(event)
   }
 

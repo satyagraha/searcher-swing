@@ -9,9 +9,11 @@ import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.effect.{Deferred, IO}
 import cats.effect.unsafe.implicits.global
 import cats.implicits.given
+import mouse.all.given 
 
 import java.nio.file.{FileSystems, Path}
 import java.util.concurrent.atomic.AtomicReference
+import java.util.regex.Pattern
 
 class Engine extends PubSub {
 
@@ -39,36 +41,26 @@ class Engine extends PubSub {
 
   private def glob(wildcard: String) = fileSystem.getPathMatcher(s"glob:${wildcard.trim}")
 
-  private def validate(uiState: UiState): ValidatedNel[String, FileSearchCriteria] = {
+  private def validate(uiState: UiState): ValidatedNel[String, FileSearchCriteria] =
+    import uiState.*
+    
     val baseDirValid = Validated
-      .fromOption(uiState.baseDir.trimmedNonBlank, "base dir may not be empty")
+      .fromOption(baseDir.trimmedNonBlank, "base dir may not be empty")
       .map(Path.of(_))
       .andThen(isValidDirectory)
       .toValidatedNel
-    val includeFilesValid = uiState.includeFiles.split(',').toList.flatMap(_.trimmedNonBlank).map(glob).validNel
-    val excludeFilesValid = uiState.excludeFiles.split(',').toList.flatMap(_.trimmedNonBlank).map(glob).validNel
-    val excludeDirsValid = uiState.excludeDirs.split(',').toList.flatMap(_.trimmedNonBlank).map(glob).validNel
-    val matchTextValid = Validated.fromOption(uiState.matchText.trimmedNonBlank, "match text may not be empty").toValidatedNel
-    val matchCaseValid = uiState.matchCase.validNel
-    val isRegexValid = uiState.isRegex.validNel
-    val recurseValid = uiState.recurse.validNel
+    val includeFilesValid = includeFiles.split(',').toList.flatMap(_.trimmedNonBlank).map(glob).validNel
+    val excludeFilesValid = excludeFiles.split(',').toList.flatMap(_.trimmedNonBlank).map(glob).validNel
+    val excludeDirsValid = excludeDirs.split(',').toList.flatMap(_.trimmedNonBlank).map(glob).validNel
+    val matchTextValid = Validated.fromOption(matchText.trimmedNonBlank, "match text may not be empty").toValidatedNel
+    val caseSensitiveFlag = matchCase.fold(0, Pattern.CASE_INSENSITIVE)
+    val regexFlag = isRegex.fold(0, Pattern.LITERAL)
+    val patternValid = Validated.catchNonFatal(Pattern.compile(matchText, caseSensitiveFlag | regexFlag)).leftMap(_.toString).toValidatedNel
+    val recurseValid = recurse.validNel
+    
 
-//    val tried = Try {
-//      FileSearchCriteria(
-//        baseDir = Path.of(uiState.baseDir),
-//        includeFiles = uiState.includeFiles.split(',').toList.map(_.trim),
-//        excludeFiles = uiState.excludeFiles.split(',').toList.map(_.trim).map(Path.of(_)),
-//        excludeDirs = uiState.excludeDirs.split(',').toList.map(_.trim).map(Path.of(_)),
-//        matchText = uiState.matchText,
-//        matchCase = uiState.matchCase,
-//        isRegex = uiState.isRegex,
-//        recurse = uiState.recurse)
-//    }
-//    tried.toEither.leftMap(_.toString).toValidatedNel
-
-    (baseDirValid, includeFilesValid, excludeFilesValid, excludeDirsValid, matchTextValid, matchCaseValid, isRegexValid, recurseValid)
+    (baseDirValid, includeFilesValid, excludeFilesValid, excludeDirsValid, matchTextValid, patternValid, recurseValid)
       .mapN(FileSearchCriteria.apply)
-  }
 
   private def searchUsing(fileSearchCriteria: FileSearchCriteria): Unit = {
     publish(ControlStateEvent(ControlState.Running))
