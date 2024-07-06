@@ -36,7 +36,7 @@ object MatchesTree:
     val nodeContents = treePath.getPath.toList.map(_.asInstanceOf[PathTreeNode].nodeContent.content)
     val paths = nodeContents.collect:
       case path: Path => path
-    val matchPosition = nodeContents.lastOption.map:
+    val matchPosition = nodeContents.lastOption.collect:
       case matchPosition: MatchPosition => matchPosition
     (paths.combineAll, matchPosition)
 
