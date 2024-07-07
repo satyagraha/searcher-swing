@@ -55,7 +55,7 @@ object FileSearcher:
           .unNone
 
       val (allFiles, allDirectories) =
-        Files.list(currentPath).iterator().asScala.toList.sortBy(_.toString).partition(_.toFile.isFile)
+        Files.list(currentPath).iterator().asScala.toList.sorted.partition(_.toFile.isFile)
 
       val checkableFiles = allFiles.filter(filenameMatches)
       val checkableDirs = allDirectories.filter(directoryMatches)
