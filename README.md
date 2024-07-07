@@ -50,7 +50,8 @@ with task `assembly`.
 
 ### Starting the application
 1. Run `java -jar /path/to/Searcher.x.y.z.jar`
-1. Additional JVM arguments may be provided, as described below under #Customisation
+1. Additional JVM arguments may be provided, as described below under
+[Configuration](#Configuration)
 
 ## Usage
 Use the dialog at the top of the UI to navigate to a folder to search,
@@ -74,11 +75,9 @@ The ordering of tree entries is notionally alphabetical, but is case-dependent i
 the host OS filesystem is case-sensitive.
 
 ### Accelerator Keys
-Some convenience keyboard 
-accelerators are provided thus:
-- _Alt-Enter_ - starts search
+Some convenience keyboard accelerators are provided thus:
+- _Enter_ - starts search
 - _Escape_ - stops search
-- _Alt-M_ - set focus on _Matches_ result tree
 
 ## Configuration
 The searcher configuration mechanism is implemented by
@@ -90,8 +89,15 @@ Individual parts of that file may be overridden in two main ways:
 1. Via individual JVM properties, e.g. `java -Dui-preference.height=600 -jar ...`
 2. Via an external file. e.g. `java -Dconfig.resource=/my/overrides.conf -jar ...`
 
+The OS command line to launch the text editor from the context menu may be set
+via the properties under configuration key `io-preferences.editor-*`.
+
 Given the above, it should not be necessary to amend the existing `reference.conf`
 unless significant changes to the application are being developed.
+
+## UI Look and Feel
+It is possible to customise the Searcher UI look and feel via JVM property overrides,
+see [Oracle L&F Tutorial](https://docs.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html).
 
 ## Principles of Operation
 For those interested in the implementation, the principal packages and their
@@ -106,9 +112,21 @@ responsibilities are as follows:
 - `io` - Miscellaneous IO-related functionality
 - `helpers` - Pub-Sub event passing framework etc.
 
+The UI appearance itself is defined in the `MainWindow.form` file, which is 
+processed by the IntelliJ GUI Builder to generate the necessary Java Swing
+code lines into `MainWindow.java` which then perform the defined form layout
+initialisation.
+
 ## To Do
 - Tabbing behaviour
 - Better icons
+- Native L&F file browser dialog
+
+## Acknowledgements
+- The [FS2](https://fs2.io) Scala stream processing library is an exceptional
+contribution to the Scala ecosystem and has proved to be very useful here. 
+- The [Scala-Swing](https://github.com/scala/scala-swing) bindings, although
+not entirely complete, were very useful.
 
 ## History
 1.0.0 Initial version

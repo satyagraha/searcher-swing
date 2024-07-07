@@ -19,26 +19,16 @@ public class MainWindow {
     private JTextField matchTextTextField;
     private JCheckBox matchCaseCheckBox;
     private JCheckBox regexCheckBox;
-    private JButton browseButton;
+    public JButton browseButton;
     private JTextField baseDirTextField;
     private JCheckBox recurseCheckBox;
-    private JPanel root;
-    private JButton startButton;
-    private JButton stopButton;
+    public JPanel rootPanel;
+    public JButton startButton;
+    public JButton stopButton;
     private JProgressBar progressBar;
-    private JScrollPane scrollPane;
+    public JScrollPane scrollPane;
 
-    private Ui ui;
-
-    public JPanel rootPanel() {
-        return root;
-    }
-
-    public JScrollPane getScrollPane() {
-        return scrollPane;
-    }
-
-    private UiState uiState() {
+    public UiState uiState() {
         return new UiState(
                 baseDirTextField.getText(),
                 includeFilesTextField.getText(),
@@ -68,34 +58,13 @@ public class MainWindow {
         progressBar.setIndeterminate(!enabled);
     }
 
-    public MainWindow(Ui ui) {
-        this.ui = this.ui;
-
-        browseButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser(new File(baseDirTextField.getText()));
-                fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                int returnVal = fileChooser.showOpenDialog(root);
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    baseDirTextField.setText(fileChooser.getSelectedFile().toString());
-                }
-            }
-        });
-
-        startButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ui.publish(new StartEvent(uiState()));
-            }
-        });
-
-        stopButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ui.publish(new StopEvent());
-            }
-        });
+    public void browseDir() {
+        JFileChooser fileChooser = new JFileChooser(new File(baseDirTextField.getText()));
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnVal = fileChooser.showOpenDialog(rootPanel);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            baseDirTextField.setText(fileChooser.getSelectedFile().toString());
+        }
     }
 
     {
@@ -113,17 +82,17 @@ public class MainWindow {
      * @noinspection ALL
      */
     private void $$$setupUI$$$() {
-        root = new JPanel();
-        root.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        rootPanel = new JPanel();
+        rootPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         final JPanel panel1 = new JPanel();
         panel1.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        root.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        rootPanel.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         panel1.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Matches", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         scrollPane = new JScrollPane();
         panel1.add(scrollPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-        root.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        rootPanel.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel3 = new JPanel();
         panel3.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
         panel2.add(panel3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -194,7 +163,7 @@ public class MainWindow {
      * @noinspection ALL
      */
     public JComponent $$$getRootComponent$$$() {
-        return root;
+        return rootPanel;
     }
 
 }
