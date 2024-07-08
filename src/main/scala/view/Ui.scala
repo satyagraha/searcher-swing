@@ -6,21 +6,37 @@ import helpers.*
 import io.*
 import ui.MainWindow
 
-import java.awt.Dimension
+import java.awt.{Dimension, Font}
 import java.awt.event.{ActionEvent, ActionListener, KeyEvent}
 import javax.swing
 import javax.swing.*
 import javax.swing.JOptionPane.*
 import javax.swing.SwingUtilities.invokeLater
+import javax.swing.plaf.FontUIResource
+import scala.jdk.CollectionConverters.*
 import scala.swing.event.Event
 import scala.util.Try
 
-case class UiPreferences(title: String, width: Int, height: Int)
+case class UiPreferences(title: String,
+                         width: Int,
+                         height: Int,
+                         fontScaling: Float)
 
 class Ui(uiPreferences: UiPreferences,
          ioSupport: IoSupport) extends PubSub:
 
   import uiPreferences.*
+
+  if fontScaling !=  1.0 then
+    val lookAndFeelDefaults = UIManager.getLookAndFeelDefaults
+    lookAndFeelDefaults.keys.asScala foreach: key =>
+      UIManager.get(key) match
+        case font: FontUIResource =>
+          val newSize = Math.round(font.getSize * fontScaling)
+          val newFont = new Font(font.getName, font.getStyle, newSize)
+          val fontUIResource = new FontUIResource(newFont)
+          lookAndFeelDefaults.put(key, fontUIResource)
+        case _ =>
 
   private val mainWindow = new MainWindow()
 

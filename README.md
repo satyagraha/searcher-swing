@@ -108,8 +108,12 @@ unless significant changes to the application are being developed.
 
 ## UI Look and Feel
 
-It is possible to customise the Searcher UI look and feel via JVM property overrides,
+Depending on the host OS, and selected JVM, it may be possible to customise the Searcher
+UI look and feel via JVM property overrides,
 see [Oracle L&F Tutorial](https://docs.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html).
+
+Overriding the configuration path `ui-preferences.font-scaling` is one further facility which
+is useful just to increase the presented font size when using high resolution monitors.
 
 ## Principles of Operation
 
