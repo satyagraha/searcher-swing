@@ -1,10 +1,9 @@
 package org.satyagraha.searcher
 package view
 
-import domain.*
+import engine.*
 import helpers.{*, given}
-import io.*
-import model.*
+import search.*
 
 import cats.data.NonEmptyList
 import cats.implicits.given
@@ -101,6 +100,8 @@ class MatchesTree extends PubSub:
 //    case EndOfStreamEvent() =>
 //      ()
     case ContextMenuEvent(contextMenuChoice) =>
+      import Clipboard.*
+      
       Option(tree.getSelectionPath) match
         case None =>
           publish(InvalidFormEvent(NonEmptyList.one("No tree row selected")))

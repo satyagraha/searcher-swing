@@ -1,7 +1,6 @@
 package org.satyagraha.searcher
-package io
+package search
 
-import domain.*
 import helpers.fs2Path
 
 import cats.effect.IO

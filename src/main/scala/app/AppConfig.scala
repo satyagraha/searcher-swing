@@ -2,7 +2,6 @@ package org.satyagraha.searcher
 package app
 
 import io.*
-import model.*
 import view.*
 
 import pureconfig.*

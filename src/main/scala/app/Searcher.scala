@@ -3,7 +3,6 @@ package app
 
 import engine.*
 import io.*
-import model.*
 import view.*
 
 import pureconfig.*

@@ -1,5 +1,5 @@
 package org.satyagraha.searcher
-package model
+package view
 
 case class UiState(baseDir: String,
                    includeFiles: String,

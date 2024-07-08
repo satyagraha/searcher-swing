@@ -1,23 +1,23 @@
 package org.satyagraha.searcher
 package engine
 
-import domain.*
 import io.*
+import search.*
 
 import cats.effect.IO
 import cats.effect.kernel.Deferred
 
-object StreamEventGenerator {
+object EngineEventGenerator:
 
   def launch(fileSearchCriteria: FileSearchCriteria,
              interruptor: Deferred[IO, Either[Throwable, Unit]],
-             handler: StreamEvent => IO[Unit]): IO[Unit] =
+             handler: EngineEvent => IO[Unit]): IO[Unit] =
     for {
-      streamStateManager <- IO.pure(new StreamStateManager(fileSearchCriteria.baseDir))
+      streamStateManager <- IO.pure(new EngineStateManager(fileSearchCriteria.baseDir))
       fileMatchStream =
         FileSearcher.findMatching(fileSearchCriteria)
           .interruptWhen(interruptor)
-          .mapAccumulate(StreamStateManager.initialState) { case (streamState, fileMatch) =>
+          .mapAccumulate(EngineStateManager.initialState) { case (streamState, fileMatch) =>
             streamStateManager.next(streamState, fileMatch)
           }
           .map(_._2)
@@ -27,5 +27,3 @@ object StreamEventGenerator {
         .evalTap(handler)
         .compile.drain
     } yield ()
-
-}

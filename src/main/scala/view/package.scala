@@ -1,23 +1,35 @@
 package org.satyagraha.searcher
 
-import io.MatchPosition
+import search.*
 
-import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
+import cats.data.NonEmptyList
+
 import java.nio.file.Path
 import scala.swing.event.Event
 
 package object view:
 
-  def copyToClipboard(text: String): Unit =
-    val stringSelection = new StringSelection(text)
-    val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
-    clipboard.setContents(stringSelection, null)
+  case class BrowseDirEvent() extends Event
+
+  enum ControlState extends Enum[ControlState]:
+    case Idle, Running
+
+  case class ControlStateEvent(controlState: ControlState) extends Event
+
+  case class InvalidFormEvent(messages: NonEmptyList[String]) extends Event
 
   enum ContextMenuChoice:
     case CopyFilename, CopyPath, EditSelected
-  
+
   case class ContextMenuEvent(contextMenuChoice: ContextMenuChoice) extends Event
-  
+
   case class EditEvent(path: Path, matchPosition: Option[MatchPosition]) extends Event
+
+  case class StartEvent(uiState: UiState) extends Event
+
+  case class StopEvent() extends Event
+
+  case class UiStateEvent(uiState: UiState) extends Event
+  
+  
   

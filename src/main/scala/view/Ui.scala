@@ -1,9 +1,9 @@
 package org.satyagraha.searcher
 package view
 
+import engine.*
 import helpers.*
 import io.*
-import model.*
 import ui.MainWindow
 
 import java.awt.Dimension
@@ -14,8 +14,10 @@ import javax.swing.JOptionPane.*
 import javax.swing.SwingUtilities.invokeLater
 import scala.swing.event.Event
 
+case class UiPreferences(title: String, width: Int, height: Int)
+
 class Ui(uiPreferences: UiPreferences,
-         ioSupport: IoSupport) extends PubSub {
+         ioSupport: IoSupport) extends PubSub:
 
   import uiPreferences.*
 
@@ -70,6 +72,8 @@ class Ui(uiPreferences: UiPreferences,
         matchesTree.handle(cse)
     case EditEvent(path, matchPosition) =>
       ioSupport.launchEditor(path, matchPosition)
+    case EndOfStreamEvent() =>
+      ()
     case event =>
       //      println(s"Ui: received unhandled event: $event")
       matchesTree.handle(event)
@@ -77,4 +81,3 @@ class Ui(uiPreferences: UiPreferences,
 
   def run(): Unit =
     frame.setVisible(true)
-}

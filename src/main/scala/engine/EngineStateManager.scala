@@ -1,19 +1,18 @@
 package org.satyagraha.searcher
 package engine
 
-import domain.*
-import io.*
+import search.*
 
 import cats.implicits.given
 import mouse.all.*
 
 import java.nio.file.Path
 
-case class StreamState(baseDir: Option[Path], subDir: Option[Path], filename: Option[Path])
+case class EngineState(baseDir: Option[Path], subDir: Option[Path], filename: Option[Path])
 
-class StreamStateManager(baseDir: Path):
+class EngineStateManager(baseDir: Path):
 
-  def next(currentState: StreamState, fileMatch: FileMatch): (StreamState, List[StreamEvent]) =
+  def next(currentState: EngineState, fileMatch: FileMatch): (EngineState, List[EngineEvent]) =
     val baseDirEvent = currentState.baseDir.isEmpty.option(BaseDirEvent(baseDir))
 
     val subDir = fileMatch.subDir(baseDir)
@@ -25,9 +24,9 @@ class StreamStateManager(baseDir: Path):
     val matchEvent = MatchEvent(fileMatch.matchPosition).some
 
     val streamEvents = List(baseDirEvent, subDirEvent, filenameEvent, matchEvent).flatten
-    val streamState = StreamState(baseDir.some, subDir.some, filename.some)
+    val streamState = EngineState(baseDir.some, subDir.some, filename.some)
 
     (streamState, streamEvents)
 
-object StreamStateManager:
-  val initialState: StreamState = StreamState(None, None, None)
+object EngineStateManager:
+  val initialState: EngineState = EngineState(None, None, None)

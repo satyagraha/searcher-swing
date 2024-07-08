@@ -2,20 +2,20 @@ package org.satyagraha.searcher
 package engine
 
 import helpers.*
-import model.*
-import domain.*
+import search.*
+import view.*
 
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.effect.{Deferred, IO}
 import cats.effect.unsafe.implicits.global
 import cats.implicits.given
-import mouse.all.given 
+import mouse.all.given
 
 import java.nio.file.{FileSystems, Path}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
-class Engine extends PubSub {
+class Engine extends PubSub:
 
   private val interruptorRef = new AtomicReference[Option[Deferred[IO, Either[Throwable, Unit]]]]
 
@@ -62,23 +62,19 @@ class Engine extends PubSub {
     (baseDirValid, includeFilesValid, excludeFilesValid, excludeDirsValid, matchTextValid, patternValid, recurseValid)
       .mapN(FileSearchCriteria.apply)
 
-  private def searchUsing(fileSearchCriteria: FileSearchCriteria): Unit = {
+  private def searchUsing(fileSearchCriteria: FileSearchCriteria): Unit =
     publish(ControlStateEvent(ControlState.Running))
     val interruptor = Deferred[IO, Either[Throwable, Unit]].unsafeRunSync()
     interruptorRef.set(interruptor.some)
-    val launchIO = StreamEventGenerator.launch(fileSearchCriteria, interruptor, handler)
+    val launchIO = EngineEventGenerator.launch(fileSearchCriteria, interruptor, handler)
     launchIO.unsafeRunAndForget()
-  }
 
-  private def handler(streamEvent: StreamEvent): IO[Unit] = IO {
-    publish(streamEvent)
-    streamEvent match
+  private def handler(engineEvent: EngineEvent): IO[Unit] = IO:
+    publish(engineEvent)
+    engineEvent match
       case EndOfStreamEvent() =>
         publish(ControlStateEvent(ControlState.Idle))
       case _ =>
-  }
 
   private def stop(): Unit =
     interruptorRef.get().foreach(_.complete(().asRight).unsafeRunSync())
-
-}
