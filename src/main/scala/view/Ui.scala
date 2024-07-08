@@ -13,6 +13,7 @@ import javax.swing.*
 import javax.swing.JOptionPane.*
 import javax.swing.SwingUtilities.invokeLater
 import scala.swing.event.Event
+import scala.util.Try
 
 case class UiPreferences(title: String, width: Int, height: Int)
 
@@ -48,8 +49,9 @@ class Ui(uiPreferences: UiPreferences,
   frame.pack()
   frame.setLocationRelativeTo(null)
 
-  private val icon = UIManager.getIcon("OptionPane.questionIcon")
-  frame.setIconImage(icon.asInstanceOf[ImageIcon].getImage)
+  Try:
+    val icon = UIManager.getIcon("OptionPane.questionIcon")
+    frame.setIconImage(icon.asInstanceOf[ImageIcon].getImage)
 
   private val matchesTree = new MatchesTree
   mainWindow.scrollPane.setViewportView(matchesTree.tree)
