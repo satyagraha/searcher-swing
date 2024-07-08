@@ -98,7 +98,7 @@ which is bundled into the assembled jar.
 Individual parts of that file may be overridden in two main ways:
 
 1. Via individual JVM properties, e.g. `java -Dui-preference.height=600 -jar ...`
-2. Via an external file. e.g. `java -Dconfig.resource=/my/overrides.conf -jar ...`
+2. Via an external file. e.g. `java -Dconfig.file=/my/overrides.conf -jar ...`
 
 The OS command line to launch the text editor from the context menu may be set
 via the properties under configuration key `io-preferences.editor-*`.
