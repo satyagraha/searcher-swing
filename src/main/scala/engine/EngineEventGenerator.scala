@@ -1,7 +1,6 @@
 package org.satyagraha.searcher
 package engine
 
-import io.*
 import search.*
 
 import cats.effect.IO

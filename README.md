@@ -74,7 +74,8 @@ mouse button to activate the context (pop-up) menu which will provide the follow
 options:
 
 1. _Copy filename_ (to clipboard)
-1. _Copy path_ (to clipboard)
+1. _Copy relative path_ (to clipboard)
+1. _Copy full path_ (to clipboard)
 1. _Edit_ (using configured editor)
 
 The ordering of tree entries is notionally alphabetical, but is case-dependent if
@@ -137,12 +138,20 @@ processed by the IntelliJ GUI Builder to generate the necessary Java Swing
 code lines into `MainWindow.java` which perform the required form layout
 initialisation at run-time.
 
-## To Do
+## IntelliJ Notes
+
+1. You may prefer the simplified package tree appearance shown if in
+_Project_ > _Options_ > _Tree Appearance_ you deselect the _Flatten Packages_
+entry, further background
+[here](https://blog.jetbrains.com/scala/2020/11/26/enhanced-package-prefixes/).
+
+## Possible To Do's
 
 - Tabbing behaviour
 - Case-insensitive tree node ordering
 - Better icons
 - Native L&F file browser dialog
+- Replace println with logging
 - Tests
 
 ## Acknowledgements

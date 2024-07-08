@@ -4,7 +4,6 @@ package search
 import helpers.fs2Path
 
 import cats.effect.IO
-import cats.implicits.*
 import fs2.text
 import mouse.all.*
 

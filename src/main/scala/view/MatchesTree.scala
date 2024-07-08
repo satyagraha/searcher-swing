@@ -18,7 +18,7 @@ import scala.swing.{Component, MenuItem, PopupMenu}
 
 object MatchesTree:
 
-  case class NodeContent(content: Path | MatchPosition):
+  private case class NodeContent(content: Path | MatchPosition):
     override def toString: String =
       content match
         case path: Path =>
@@ -29,44 +29,46 @@ object MatchesTree:
           s"$lineNumber, $columnNumber : ${lineText.trim.take(100)}"
 
 
-  class PathTreeNode(val nodeContent: NodeContent) extends DefaultMutableTreeNode(nodeContent)
+  private class PathTreeNode(val nodeContent: NodeContent) extends DefaultMutableTreeNode(nodeContent)
 
-  def pathTreePaths(treePath: TreePath): (Path, Option[MatchPosition]) =
+  private def pathTreePaths(treePath: TreePath): (List[Path], Option[MatchPosition]) =
     val nodeContents = treePath.getPath.toList.map(_.asInstanceOf[PathTreeNode].nodeContent.content)
     val paths = nodeContents.collect:
       case path: Path => path
     val matchPosition = nodeContents.lastOption.collect:
       case matchPosition: MatchPosition => matchPosition
-    (paths.combineAll, matchPosition)
+    (paths, matchPosition)
 
 class MatchesTree extends PubSub:
+
   import MatchesTree.*
   import ContextMenuChoice.*
 
-  val treeModel = new DefaultTreeModel(null)
+  private val treeModel = new DefaultTreeModel(null)
   val tree = new JTree(treeModel)
 
-  var baseDirNode: DefaultMutableTreeNode = _
-  var subDirNode: DefaultMutableTreeNode = _
-  var filenameNode: DefaultMutableTreeNode = _
+  private var baseDirNode: DefaultMutableTreeNode = _
+  private var subDirNode: DefaultMutableTreeNode = _
+  private var filenameNode: DefaultMutableTreeNode = _
 
-  class ContextMenuItem(title: String,
-                        contextMenuChoice: ContextMenuChoice) extends MenuItem(title):
-      override def publish(e: Event): Unit =
-        MatchesTree.this.handle(ContextMenuEvent(contextMenuChoice))
+  private class ContextMenuItem(title: String,
+                                contextMenuChoice: ContextMenuChoice) extends MenuItem(title):
+    override def publish(e: Event): Unit =
+      MatchesTree.this.handle(ContextMenuEvent(contextMenuChoice))
 
-  val copyFilename = new ContextMenuItem("Copy filename", CopyFilename)
-  val copyPath = new ContextMenuItem("Copy path", CopyPath)
-  val editSelected = new ContextMenuItem("Edit", EditSelected)
-  val popupMenu = new PopupMenu:
-    contents ++= Seq(copyFilename, copyPath, editSelected)
+  private val copyFilename = new ContextMenuItem("Copy filename", CopyFilename)
+  private val copyRelativePath = new ContextMenuItem("Copy relative path", CopyRelativePath)
+  private val copyFullPath = new ContextMenuItem("Copy full path", CopyFullPath)
+  private val editSelected = new ContextMenuItem("Edit", EditSelected)
+  private val popupMenu = new PopupMenu:
+    contents ++= Seq(copyFilename, copyRelativePath, copyFullPath, editSelected)
 
-  val stree = Component.wrap(tree)
+  private val wrappedtree = Component.wrap(tree)
 
-  val mouseListener = new MouseAdapter:
+  private val mouseListener = new MouseAdapter:
     override def mouseClicked(e: MouseEvent): Unit =
       if isRightMouseButton(e) then
-        popupMenu.show(stree, e.getX, e.getY)
+        popupMenu.show(wrappedtree, e.getX, e.getY)
 
   tree.addMouseListener(mouseListener)
 
@@ -97,23 +99,29 @@ class MatchesTree extends PubSub:
         val nodes = Array[AnyRef](baseDirNode, subDirNode, filenameNode)
         val filenamePath = new TreePath(nodes)
         tree.expandPath(filenamePath)
-//    case EndOfStreamEvent() =>
-//      ()
     case ContextMenuEvent(contextMenuChoice) =>
       import Clipboard.*
-      
+
       Option(tree.getSelectionPath) match
         case None =>
           publish(InvalidFormEvent(NonEmptyList.one("No tree row selected")))
         case Some(treePath) =>
-          val (path, matchPosition) = pathTreePaths(treePath)
+          val (paths, matchPosition) = pathTreePaths(treePath)
+          val fullPath = paths.combineAll
           contextMenuChoice match
             case CopyFilename =>
-              copyToClipboard(path.getFileName.toString)
-            case CopyPath =>
-              copyToClipboard(path.toString)
+              copyToClipboard(fullPath.getFileName.toString)
+            case CopyRelativePath =>
+              paths match
+                case head +: tail =>
+                  val relativePath = tail.combineAll
+                  copyToClipboard(relativePath.toString)
+                case _ =>
+                  copyToClipboard("")
+            case CopyFullPath =>
+              copyToClipboard(fullPath.toString)
             case EditSelected =>
-              publish(EditEvent(path, matchPosition))
+              publish(EditEvent(fullPath, matchPosition))
     case event =>
       println(s"MatchesTree: received unhandled event: $event")
   }
