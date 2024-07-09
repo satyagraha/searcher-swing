@@ -20,6 +20,7 @@ import scala.util.Try
 case class UiPreferences(title: String,
                          width: Int,
                          height: Int,
+                         fontEncoded: String,
                          fontScaling: Float)
 
 class Ui(uiPreferences: UiPreferences,
@@ -27,16 +28,14 @@ class Ui(uiPreferences: UiPreferences,
 
   import uiPreferences.*
 
-  if fontScaling !=  1.0 then
-    val lookAndFeelDefaults = UIManager.getLookAndFeelDefaults
-    lookAndFeelDefaults.keys.asScala foreach: key =>
-      UIManager.get(key) match
-        case font: FontUIResource =>
-          val newSize = Math.round(font.getSize * fontScaling)
-          val newFont = new Font(font.getName, font.getStyle, newSize)
-          val fontUIResource = new FontUIResource(newFont)
-          lookAndFeelDefaults.put(key, fontUIResource)
-        case _ =>
+  private val lookAndFeelDefaults = UIManager.getLookAndFeelDefaults
+  lookAndFeelDefaults.keys.asScala foreach: key =>
+    UIManager.get(key) match
+      case font: FontUIResource =>
+        val newFont = fontEncoded.trimmedNonBlank.fold(font.deriveFont(font.getSize * fontScaling))(Font.decode)
+        val fontUIResource = new FontUIResource(newFont)
+        lookAndFeelDefaults.put(key, fontUIResource)
+      case _ =>
 
   private val mainWindow = new MainWindow()
 

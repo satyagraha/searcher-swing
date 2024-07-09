@@ -115,6 +115,9 @@ see [Oracle L&F Tutorial](https://docs.oracle.com/javase/tutorial/uiswing/lookan
 Overriding the configuration path `ui-preferences.font-scaling` is one further facility which
 is useful just to increase the presented font size when using high resolution monitors.
 
+Alternatively the configuration path `ui-preferences.font-encoded` may be overridden with
+a string like `"Tahoma-plain-14"` to change the font scheme of the entire application.
+
 ## Principles of Operation
 
 For those interested in the implementation, the Java/Scala packages and their
