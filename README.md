@@ -151,6 +151,9 @@ initialisation at run-time.
 _Project_ > _Options_ > _Tree Appearance_ you deselect the _Flatten Packages_
 entry, further background
 [here](https://blog.jetbrains.com/scala/2020/11/26/enhanced-package-prefixes/).
+2. The auto-derivation of `ConfigReader` instances after a change to the
+app configuration case class members requires a full _Build_ > _Rebuild Project_ 
+as the necessary recompilation does not seem to be detected by default.
 
 ## Possible To Do's
 

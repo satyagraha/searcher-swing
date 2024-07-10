@@ -28,14 +28,15 @@ class Ui(uiPreferences: UiPreferences,
 
   import uiPreferences.*
 
-  private val lookAndFeelDefaults = UIManager.getLookAndFeelDefaults
-  lookAndFeelDefaults.keys.asScala foreach: key =>
-    UIManager.get(key) match
-      case font: FontUIResource =>
-        val newFont = fontEncoded.trimmedNonBlank.fold(font.deriveFont(font.getSize * fontScaling))(Font.decode)
-        val fontUIResource = new FontUIResource(newFont)
-        lookAndFeelDefaults.put(key, fontUIResource)
-      case _ =>
+  locally:
+    val lookAndFeelDefaults = UIManager.getLookAndFeelDefaults
+    lookAndFeelDefaults.keys.asScala foreach: key =>
+      UIManager.get(key) match
+        case font: FontUIResource =>
+          val newFont = fontEncoded.trimmedNonBlank.fold(font.deriveFont(font.getSize * fontScaling))(Font.decode)
+          val fontUIResource = new FontUIResource(newFont)
+          lookAndFeelDefaults.put(key, fontUIResource)
+        case _ =>
 
   private val mainWindow = new MainWindow()
 
@@ -73,28 +74,28 @@ class Ui(uiPreferences: UiPreferences,
 
   subscribeTo(matchesTree)
 
-  reactions += {
-    case BrowseDirEvent() =>
-      invokeLater: () =>
-        mainWindow.browseDir()
-    case InvalidFormEvent(messages) =>
-      invokeLater: () =>
-        showMessageDialog(frame, messages.toList.mkString(", "), "Form Error", WARNING_MESSAGE)
-    case UiStateEvent(uiState) =>
-      invokeLater: () =>
-        mainWindow.uiStateSet(uiState)
-    case cse@ControlStateEvent(controlState) =>
-      invokeLater: () =>
-        mainWindow.controlStateSet(controlState == ControlState.Idle)
-        matchesTree.handle(cse)
-    case EditEvent(path, matchPosition) =>
-      ioSupport.launchEditor(path, matchPosition)
-    case EndOfStreamEvent() =>
-      ()
-    case event =>
-      //      println(s"Ui: received unhandled event: $event")
-      matchesTree.handle(event)
-  }
+  reactions +=
+    locally:
+      case BrowseDirEvent() =>
+        invokeLater: () =>
+          mainWindow.browseDir()
+      case InvalidFormEvent(messages) =>
+        invokeLater: () =>
+          showMessageDialog(frame, messages.toList.mkString(", "), "Form Error", WARNING_MESSAGE)
+      case UiStateEvent(uiState) =>
+        invokeLater: () =>
+          mainWindow.uiStateSet(uiState)
+      case cse@ControlStateEvent(controlState) =>
+        invokeLater: () =>
+          mainWindow.controlStateSet(controlState == ControlState.Idle)
+          matchesTree.handle(cse)
+      case EditEvent(path, matchPosition) =>
+        ioSupport.launchEditor(path, matchPosition)
+      case EndOfStreamEvent() =>
+        ()
+      case event =>
+        //      println(s"Ui: received unhandled event: $event")
+        matchesTree.handle(event)
 
   def run(): Unit =
     frame.setVisible(true)

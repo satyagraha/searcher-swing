@@ -19,20 +19,20 @@ class Engine extends PubSub:
 
   private val interruptorRef = new AtomicReference[Option[Deferred[IO, Either[Throwable, Unit]]]]
 
-  reactions += {
-    case StartEvent(uiState: UiState) =>
-      //      println("StartEvent")
-      validate(uiState) match
-        case Validated.Valid(fileSearchCriteria) =>
-          searchUsing(fileSearchCriteria)
-        case Validated.Invalid(errors) =>
-          publish(InvalidFormEvent(errors))
-    case StopEvent() =>
-      //      println("StopEvent")
-      stop()
-    case event =>
-      println(s"Engine: received unhandled event: $event")
-  }
+  reactions +=
+    locally:
+      case StartEvent(uiState: UiState) =>
+        //      println("StartEvent")
+        validate(uiState) match
+          case Validated.Valid(fileSearchCriteria) =>
+            searchUsing(fileSearchCriteria)
+          case Validated.Invalid(errors) =>
+            publish(InvalidFormEvent(errors))
+      case StopEvent() =>
+        //      println("StopEvent")
+        stop()
+      case event =>
+        println(s"Engine: received unhandled event: $event")
 
   private def isValidDirectory(path: Path): Validated[String, Path] =
     Validated.cond(path.toFile.isDirectory, path, s"$path is not a valid directory")

@@ -72,56 +72,56 @@ class MatchesTree extends PubSub:
 
   tree.addMouseListener(mouseListener)
 
-  reactions += {
-    case ControlStateEvent(controlState) =>
-      if controlState == ControlState.Running then
-        treeModel.setRoot(null)
-    case BaseDirEvent(baseDir) =>
-      invokeLater: () =>
-        baseDirNode = new PathTreeNode(NodeContent(baseDir))
-        treeModel.setRoot(baseDirNode)
-    case SubDirEvent(subDir) =>
-      invokeLater: () =>
-        subDirNode = new PathTreeNode(NodeContent(subDir))
-        treeModel.insertNodeInto(subDirNode, baseDirNode, baseDirNode.getChildCount)
-        tree.expandPath(new TreePath(baseDirNode))
-    case FilenameEvent(filename) =>
-      invokeLater: () =>
-        filenameNode = new PathTreeNode(NodeContent(filename))
-        treeModel.insertNodeInto(filenameNode, subDirNode, subDirNode.getChildCount)
-        val nodes = Array[AnyRef](baseDirNode, subDirNode)
-        val subDirPath = new TreePath(nodes)
-        tree.expandPath(subDirPath)
-    case MatchEvent(matchPosition) =>
-      invokeLater: () =>
-        val matchPositionNode = new PathTreeNode(NodeContent(matchPosition))
-        treeModel.insertNodeInto(matchPositionNode, filenameNode, filenameNode.getChildCount)
-        val nodes = Array[AnyRef](baseDirNode, subDirNode, filenameNode)
-        val filenamePath = new TreePath(nodes)
-        tree.expandPath(filenamePath)
-    case ContextMenuEvent(contextMenuChoice) =>
-      import Clipboard.*
+  reactions +=
+    locally:
+      case ControlStateEvent(controlState) =>
+        if controlState == ControlState.Running then
+          treeModel.setRoot(null)
+      case BaseDirEvent(baseDir) =>
+        invokeLater: () =>
+          baseDirNode = new PathTreeNode(NodeContent(baseDir))
+          treeModel.setRoot(baseDirNode)
+      case SubDirEvent(subDir) =>
+        invokeLater: () =>
+          subDirNode = new PathTreeNode(NodeContent(subDir))
+          treeModel.insertNodeInto(subDirNode, baseDirNode, baseDirNode.getChildCount)
+          tree.expandPath(new TreePath(baseDirNode))
+      case FilenameEvent(filename) =>
+        invokeLater: () =>
+          filenameNode = new PathTreeNode(NodeContent(filename))
+          treeModel.insertNodeInto(filenameNode, subDirNode, subDirNode.getChildCount)
+          val nodes = Array[AnyRef](baseDirNode, subDirNode)
+          val subDirPath = new TreePath(nodes)
+          tree.expandPath(subDirPath)
+      case MatchEvent(matchPosition) =>
+        invokeLater: () =>
+          val matchPositionNode = new PathTreeNode(NodeContent(matchPosition))
+          treeModel.insertNodeInto(matchPositionNode, filenameNode, filenameNode.getChildCount)
+          val nodes = Array[AnyRef](baseDirNode, subDirNode, filenameNode)
+          val filenamePath = new TreePath(nodes)
+          tree.expandPath(filenamePath)
+      case ContextMenuEvent(contextMenuChoice) =>
+        import Clipboard.*
 
-      Option(tree.getSelectionPath) match
-        case None =>
-          publish(InvalidFormEvent(NonEmptyList.one("No tree row selected")))
-        case Some(treePath) =>
-          val (paths, matchPosition) = pathTreePaths(treePath)
-          val fullPath = paths.combineAll
-          contextMenuChoice match
-            case CopyFilename =>
-              copyToClipboard(fullPath.getFileName.toString)
-            case CopyRelativePath =>
-              paths match
-                case head +: tail =>
-                  val relativePath = tail.combineAll
-                  copyToClipboard(relativePath.toString)
-                case _ =>
-                  copyToClipboard("")
-            case CopyFullPath =>
-              copyToClipboard(fullPath.toString)
-            case EditSelected =>
-              publish(EditEvent(fullPath, matchPosition))
-    case event =>
-      println(s"MatchesTree: received unhandled event: $event")
-  }
+        Option(tree.getSelectionPath) match
+          case None =>
+            publish(InvalidFormEvent(NonEmptyList.one("No tree row selected")))
+          case Some(treePath) =>
+            val (paths, matchPosition) = pathTreePaths(treePath)
+            val fullPath = paths.combineAll
+            contextMenuChoice match
+              case CopyFilename =>
+                copyToClipboard(fullPath.getFileName.toString)
+              case CopyRelativePath =>
+                paths match
+                  case head +: tail =>
+                    val relativePath = tail.combineAll
+                    copyToClipboard(relativePath.toString)
+                  case _ =>
+                    copyToClipboard("")
+              case CopyFullPath =>
+                copyToClipboard(fullPath.toString)
+              case EditSelected =>
+                publish(EditEvent(fullPath, matchPosition))
+      case event =>
+        println(s"MatchesTree: received unhandled event: $event")
