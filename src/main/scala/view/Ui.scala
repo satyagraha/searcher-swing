@@ -6,6 +6,8 @@ import helpers.*
 import io.*
 import ui.MainWindow
 
+import com.typesafe.scalalogging.StrictLogging
+
 import java.awt.{Dimension, Font}
 import java.awt.event.{ActionEvent, ActionListener, KeyEvent}
 import javax.swing
@@ -24,7 +26,7 @@ case class UiPreferences(title: String,
                          fontScaling: Float)
 
 class Ui(uiPreferences: UiPreferences,
-         ioSupport: IoSupport) extends PubSub:
+         ioSupport: IoSupport) extends PubSub with StrictLogging:
 
   import uiPreferences.*
 
@@ -94,7 +96,7 @@ class Ui(uiPreferences: UiPreferences,
       case EndOfStreamEvent() =>
         ()
       case event =>
-        //      println(s"Ui: received unhandled event: $event")
+        logger.debug(s"Ui: received unhandled event: $event")
         matchesTree.handle(event)
 
   def run(): Unit =

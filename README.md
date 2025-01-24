@@ -58,6 +58,7 @@ but you won't be able to amend the GUI.
 1. Run `java -jar /path/to/Searcher.x.y.z.jar`
 1. Additional JVM arguments may be provided, as described below under
    [Configuration](#Configuration)
+1. Optionally set environment variable `LOG_LEVEL` to e.g. `DEBUG` for detailed logging
 
 ## Usage
 
@@ -158,10 +159,10 @@ as the necessary recompilation does not seem to be detected by default.
 ## Possible To Do's
 
 - Tabbing behaviour
+- Accelerator keys
 - Case-insensitive tree node ordering
 - Better icons
 - Native L&F file browser dialog
-- Replace println with logging
 - Tests
 
 ## Acknowledgements

@@ -9,30 +9,31 @@ import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.effect.{Deferred, IO}
 import cats.effect.unsafe.implicits.global
 import cats.implicits.given
+import com.typesafe.scalalogging.StrictLogging
 import mouse.all.given
 
 import java.nio.file.{FileSystems, Path}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
-class Engine extends PubSub:
+class Engine extends PubSub with StrictLogging:
 
   private val interruptorRef = new AtomicReference[Option[Deferred[IO, Either[Throwable, Unit]]]]
 
   reactions +=
     locally:
       case StartEvent(uiState: UiState) =>
-        //      println("StartEvent")
+        logger.debug("StartEvent")
         validate(uiState) match
           case Validated.Valid(fileSearchCriteria) =>
             searchUsing(fileSearchCriteria)
           case Validated.Invalid(errors) =>
             publish(InvalidFormEvent(errors))
       case StopEvent() =>
-        //      println("StopEvent")
+        logger.debug("StopEvent")
         stop()
       case event =>
-        println(s"Engine: received unhandled event: $event")
+        logger.info(s"Engine: received unhandled event: $event")
 
   private def isValidDirectory(path: Path): Validated[String, Path] =
     Validated.cond(path.toFile.isDirectory, path, s"$path is not a valid directory")
@@ -43,7 +44,7 @@ class Engine extends PubSub:
 
   private def validate(uiState: UiState): ValidatedNel[String, FileSearchCriteria] =
     import uiState.*
-    
+
     val baseDirValid = Validated
       .fromOption(baseDir.trimmedNonBlank, "base dir may not be empty")
       .map(Path.of(_))
@@ -57,7 +58,7 @@ class Engine extends PubSub:
     val regexFlag = isRegex.fold(0, Pattern.LITERAL)
     val patternValid = Validated.catchNonFatal(Pattern.compile(matchText, caseSensitiveFlag | regexFlag)).leftMap(_.toString).toValidatedNel
     val recurseValid = recurse.validNel
-    
+
 
     (baseDirValid, includeFilesValid, excludeFilesValid, excludeDirsValid, matchTextValid, patternValid, recurseValid)
       .mapN(FileSearchCriteria.apply)

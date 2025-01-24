@@ -7,6 +7,7 @@ import search.*
 
 import cats.data.NonEmptyList
 import cats.implicits.given
+import com.typesafe.scalalogging.StrictLogging
 
 import java.awt.event.{MouseAdapter, MouseEvent}
 import java.nio.file.Path
@@ -39,7 +40,7 @@ object MatchesTree:
       case matchPosition: MatchPosition => matchPosition
     (paths, matchPosition)
 
-class MatchesTree extends PubSub:
+class MatchesTree extends PubSub with StrictLogging:
 
   import MatchesTree.*
   import ContextMenuChoice.*
@@ -124,4 +125,4 @@ class MatchesTree extends PubSub:
               case EditSelected =>
                 publish(EditEvent(fullPath, matchPosition))
       case event =>
-        println(s"MatchesTree: received unhandled event: $event")
+        logger.info(s"MatchesTree: received unhandled event: $event")

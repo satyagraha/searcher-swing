@@ -13,8 +13,10 @@ lazy val root = (project in file("."))
     name := "SearcherSwing",
     idePackagePrefix := Some("org.satyagraha.searcher"),
     libraryDependencies ++= Seq(
+      "ch.qos.logback" % "logback-classic" % "1.5.12",
       "co.fs2" %% "fs2-core" % "3.10.2",
       "co.fs2" %% "fs2-io" % "3.10.2",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
       "com.github.pureconfig" %% "pureconfig-core" % "0.17.7",
       "com.jetbrains.intellij.java" % "java-gui-forms-rt" % "241.18034.82",
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0",

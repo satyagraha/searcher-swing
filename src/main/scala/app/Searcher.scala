@@ -5,14 +5,16 @@ import engine.*
 import io.*
 import view.*
 
+import com.typesafe.scalalogging.StrictLogging
 import pureconfig.*
 
-object Searcher:
+object Searcher extends StrictLogging :
 
   def main(args: Array[String]): Unit =
     val appConfig = ConfigSource.default.loadOrThrow[AppConfig]
+    logger.info(s"appConfig: $appConfig")
+
     import appConfig.*
-//    println(s"appConfig: $appConfig")
 
     val engine = new Engine
     val ioSupport = new IoSupport(ioPreferences)
