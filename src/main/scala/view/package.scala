@@ -19,7 +19,7 @@ package object view:
   case class InvalidFormEvent(messages: NonEmptyList[String]) extends Event
 
   enum ContextMenuChoice:
-    case CopyFilename, CopyRelativePath, CopyFullPath, EditSelected
+    case CopyFilename, CopyRelativePath, CopyFullPath, CopyLine, EditSelected
 
   case class ContextMenuEvent(contextMenuChoice: ContextMenuChoice) extends Event
 

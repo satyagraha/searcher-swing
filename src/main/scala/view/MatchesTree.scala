@@ -7,6 +7,7 @@ import search.*
 
 import cats.data.NonEmptyList
 import cats.implicits.given
+import com.google.common.base.CaseFormat
 import com.typesafe.scalalogging.StrictLogging
 
 import java.awt.event.{MouseAdapter, MouseEvent}
@@ -14,6 +15,7 @@ import java.nio.file.Path
 import javax.swing.JTree
 import javax.swing.SwingUtilities.{invokeLater, isRightMouseButton}
 import javax.swing.tree.{DefaultMutableTreeNode, DefaultTreeModel, TreePath}
+import scala.collection.concurrent.TrieMap
 import scala.swing.event.Event
 import scala.swing.{Component, MenuItem, PopupMenu}
 
@@ -24,6 +26,7 @@ object MatchesTree:
       content match
         case path: Path =>
           path.toString
+
         case matchPosition: MatchPosition =>
           import matchPosition.*
 
@@ -51,18 +54,21 @@ class MatchesTree extends PubSub with StrictLogging:
   private var baseDirNode: DefaultMutableTreeNode = _
   private var subDirNode: DefaultMutableTreeNode = _
   private var filenameNode: DefaultMutableTreeNode = _
+  
+  private val nodeMap = new TrieMap[Seq[Path], DefaultMutableTreeNode]()
 
   private class ContextMenuItem(title: String,
                                 contextMenuChoice: ContextMenuChoice) extends MenuItem(title):
     override def publish(e: Event): Unit =
       MatchesTree.this.handle(ContextMenuEvent(contextMenuChoice))
 
-  private val copyFilename = new ContextMenuItem("Copy filename", CopyFilename)
-  private val copyRelativePath = new ContextMenuItem("Copy relative path", CopyRelativePath)
-  private val copyFullPath = new ContextMenuItem("Copy full path", CopyFullPath)
-  private val editSelected = new ContextMenuItem("Edit", EditSelected)
+  private val menuItems = ContextMenuChoice.values.toSeq.map: cmc =>
+    val menuText = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, cmc.toString)
+      .replace("-", " ").capitalize
+    ContextMenuItem(menuText, cmc)
+
   private val popupMenu = new PopupMenu:
-    contents ++= Seq(copyFilename, copyRelativePath, copyFullPath, editSelected)
+    contents ++= menuItems
 
   private val wrappedtree = Component.wrap(tree)
 
@@ -73,37 +79,59 @@ class MatchesTree extends PubSub with StrictLogging:
 
   tree.addMouseListener(mouseListener)
 
+  private def expandTo(leafNode: DefaultMutableTreeNode): Unit =
+    val parentNodes = leafNode.getPath.toSeq.dropRight(1)
+    if parentNodes.nonEmpty then
+      val parentPath = new TreePath(parentNodes.toArray[AnyRef])
+      tree.expandPath(parentPath)
+
   reactions +=
     locally:
       case ControlStateEvent(controlState) =>
         if controlState == ControlState.Running then
+          logger.debug("Running")
           treeModel.setRoot(null)
+          nodeMap.clear()
       case BaseDirEvent(baseDir) =>
         invokeLater: () =>
+          logger.debug(s"baseDir: $baseDir")
           baseDirNode = new PathTreeNode(NodeContent(baseDir))
           treeModel.setRoot(baseDirNode)
+          nodeMap.put(Seq.empty, baseDirNode)
+          expandTo(baseDirNode)
       case SubDirEvent(subDir) =>
         invokeLater: () =>
-          subDirNode = new PathTreeNode(NodeContent(subDir))
-          treeModel.insertNodeInto(subDirNode, baseDirNode, baseDirNode.getChildCount)
-          tree.expandPath(new TreePath(baseDirNode))
+          logger.debug(s"subDir: $subDir")
+          subDir.elements.inits.toSeq.reverse foreach: pathPrefix =>
+            nodeMap.get(pathPrefix) match
+              case Some(node) =>
+                subDirNode = node
+              case None =>
+                val lastDir = pathPrefix.last
+                val dirNode = new PathTreeNode(NodeContent(lastDir))
+                treeModel.insertNodeInto(dirNode, subDirNode, subDirNode.getChildCount)
+                nodeMap.put(pathPrefix, dirNode)
+                subDirNode = dirNode
+          expandTo(subDirNode)
+                
       case FilenameEvent(filename) =>
         invokeLater: () =>
+          logger.debug(s"filename: $filename")
           filenameNode = new PathTreeNode(NodeContent(filename))
           treeModel.insertNodeInto(filenameNode, subDirNode, subDirNode.getChildCount)
-          val nodes = Array[AnyRef](baseDirNode, subDirNode)
-          val subDirPath = new TreePath(nodes)
-          tree.expandPath(subDirPath)
+          expandTo(filenameNode)
+
       case MatchEvent(matchPosition) =>
         invokeLater: () =>
+          logger.debug(s"matchPosition: $matchPosition")
           val matchPositionNode = new PathTreeNode(NodeContent(matchPosition))
           treeModel.insertNodeInto(matchPositionNode, filenameNode, filenameNode.getChildCount)
-          val nodes = Array[AnyRef](baseDirNode, subDirNode, filenameNode)
-          val filenamePath = new TreePath(nodes)
-          tree.expandPath(filenamePath)
+          expandTo(matchPositionNode)
+
       case ContextMenuEvent(contextMenuChoice) =>
         import Clipboard.*
 
+        logger.debug(s"contextMenuChoice: $contextMenuChoice")
         Option(tree.getSelectionPath) match
           case None =>
             publish(InvalidFormEvent(NonEmptyList.one("No tree row selected")))
@@ -122,7 +150,11 @@ class MatchesTree extends PubSub with StrictLogging:
                     copyToClipboard("")
               case CopyFullPath =>
                 copyToClipboard(fullPath.toString)
+              case CopyLine =>
+                matchPosition.foreach: matched =>
+                  copyToClipboard(matched.lineText)
               case EditSelected =>
                 publish(EditEvent(fullPath, matchPosition))
+
       case event =>
-        logger.info(s"MatchesTree: received unhandled event: $event")
+        logger.debug(s"MatchesTree: received unhandled event: $event")

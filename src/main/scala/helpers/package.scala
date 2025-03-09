@@ -5,6 +5,8 @@ import mouse.all.*
 
 import java.nio.file.Path
 
+import scala.jdk.CollectionConverters.*
+
 package object helpers:
 
   extension [A, CC[X] <: Iterable[X]](cca: CC[A])
@@ -22,5 +24,8 @@ package object helpers:
     override def combine(x: Path, y: Path): Path = x resolve y
 
   extension (path: Path)
+    def elements: Seq[Path] =
+      Seq.from(path.iterator().asScala)
+
     def fs2Path: fs2.io.file.Path =
       fs2.io.file.Path.fromNioPath(path)

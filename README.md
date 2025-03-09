@@ -77,6 +77,7 @@ options:
 1. _Copy filename_ (to clipboard)
 1. _Copy relative path_ (to clipboard)
 1. _Copy full path_ (to clipboard)
+1. _Copy line_ (to clipboard)
 1. _Edit_ (using configured editor)
 
 The ordering of tree entries is notionally alphabetical, but is case-dependent if
@@ -163,6 +164,7 @@ as the necessary recompilation does not seem to be detected by default.
 - Case-insensitive tree node ordering
 - Better icons
 - Native L&F file browser dialog
+- Version info available in UI
 - Tests
 
 ## Acknowledgements
